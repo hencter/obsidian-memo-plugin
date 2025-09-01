@@ -12,13 +12,14 @@ export class MemosView extends ItemView {
   }
 
   getDisplayText() {
-    return 'Memos view';
+    // 视图标题（标签页）
+    return 'Memos';
   }
 
   async onOpen() {
     const container = this.contentEl;
     container.empty();
-    container.createEl('h4', { text: 'Memos view' });
+    container.createEl('h4', { text: 'Memos' });
   }
 
   async onClose() {
