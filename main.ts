@@ -1,7 +1,8 @@
-import { App, Notice, Plugin } from 'obsidian';
+import { App, Notice, Plugin, WorkspaceLeaf } from 'obsidian';
 import { MemoPluginSettings, DEFAULT_SETTINGS } from './src/types/settings';
 import { MemoSettingTab } from './src/settings/SettingTab';
 import { CommandManager } from './src/commands/index';
+import { VIEW_TYPE_MEMOS, MemosView } from 'src/views/MemosView';
 
 export default class MemoPlugin extends Plugin {
 	settings: MemoPluginSettings;
@@ -31,14 +32,44 @@ export default class MemoPlugin extends Plugin {
 	 */
 	private setupUI(): void {
 		// 创建左侧功能区图标
+
+		this.registerView(
+			VIEW_TYPE_MEMOS,
+			(leaf) => new MemosView(leaf)
+		);
+
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Memo Plugin', (evt: MouseEvent) => {
 			new Notice('Memo Plugin activated!');
+			this.activateMemosView();
 		});
 		ribbonIconEl.addClass('memo-plugin-ribbon-class');
 
 		// 添加状态栏项目（移动端不可用）
 		const statusBarItemEl = this.addStatusBarItem();
 		statusBarItemEl.setText('Memo Ready');
+	}
+
+	async activateMemosView() {
+		const { workspace } = this.app;
+
+		let leaf: WorkspaceLeaf | null = null;
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_MEMOS);
+
+		if (leaves.length > 0) {
+			// 如果已存在我们的视图，直接使用
+			leaf = leaves[0];
+		} else {
+			// 在主视图中创建新的 leaf（标签页）
+			leaf = workspace.getLeaf(true);
+			if (leaf) {
+				await leaf.setViewState({ type: VIEW_TYPE_MEMOS, active: true });
+			}
+		}
+
+		// 激活并显示 leaf
+		if (leaf) {
+			workspace.setActiveLeaf(leaf);
+		}
 	}
 
 	/**
