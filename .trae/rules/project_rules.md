@@ -101,12 +101,14 @@ export class CommandManager {
 # 安装依赖
 pnpm install
 
-# 启动开发模式
+# 启动开发模式（仅构建和监听文件变化，不启动 web 服务器）
 pnpm run dev
 
 # 构建生产版本
 pnpm run build
 ```
+
+**重要说明**: 本项目是 Obsidian 插件，`pnpm run dev` 命令只会启动 esbuild 的监听模式来构建和监听文件变化，**不会启动任何 web 服务器**。插件直接在 Obsidian 应用程序中运行，无需独立的 web 服务器环境。
 
 ### 2. 开发步骤
 

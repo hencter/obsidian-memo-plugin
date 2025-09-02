@@ -1,8 +1,8 @@
 import { App, Notice, Plugin, WorkspaceLeaf } from 'obsidian';
 import { MemoPluginSettings, DEFAULT_SETTINGS } from './src/types/settings';
-import { MemoSettingTab } from './src/settings/SettingTab';
+import { MemoSettingTab } from './src/settings/tab';
 import { CommandManager } from './src/commands/index';
-import { VIEW_TYPE_MEMOS, MemosView } from 'src/views/MemosView';
+import { MEMOS_VIEW_TYPE as VIEW_TYPE_MEMOS, MemosView } from 'src/views/MemosView';
 
 export default class MemoPlugin extends Plugin {
 	settings: MemoPluginSettings;

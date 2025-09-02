@@ -1,16 +1,28 @@
-# Obsidian Sample Plugin
+# Obsidian Memo Plugin
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+A powerful memo management plugin for Obsidian that allows you to quickly create, edit, and organize your thoughts and notes.
+
+## Features
+
+- **Quick Memo Creation**: Create memos with a powerful CodeMirror editor interface
+- **Advanced Editor**: Built-in CodeMirror 6 editor with syntax highlighting and markdown support
+- **Auto Daily Note Integration**: Automatically link memos to your daily notes
+- **Edit Mode**: Edit existing memos with full CodeMirror editor support
+- **Responsive Design**: Clean, modern interface that fits Obsidian's design language
+- **Cross-Platform**: Works seamlessly on Windows, macOS, and Linux
+
+
+
+## Usage
+
+1. Open the Memos view from the ribbon or command palette
+2. Type your memo content in the text area
+3. Click "Save" to save
+4. Your memo will be automatically saved and linked to today's daily note
+5. Edit existing memos by clicking the edit button
 
 This project uses TypeScript to provide type checking and documentation.
 The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
-
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
 
 ## First time developing plugins?
 

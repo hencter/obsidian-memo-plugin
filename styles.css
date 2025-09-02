@@ -1,8 +1,247 @@
-/*
+/* styles.css */
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.memos-view-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: var(--size-4-2);
+  gap: var(--size-4-4);
+}
 
-If your plugin does not need CSS, delete this file.
+.memos-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+}
 
-*/
+.memos-editor {
+  width: 100%;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 8px;
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-normal);
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* CodeMirror 编辑器容器样式 */
+.memos-editor-container {
+    width: 100%;
+    margin-bottom: var(--size-4-3);
+}
+
+/* CodeMirror 占位符样式 */
+.memos-editor-container .cm-editor[data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: var(--text-muted);
+    position: absolute;
+    pointer-events: none;
+    padding: var(--size-4-3);
+    font-style: italic;
+    font-size: var(--font-ui-medium);
+    font-family: var(--font-text);
+}
+
+/* CodeMirror 基础样式优化 - 移除行号，符合 Obsidian 风格 */
+.cm-editor {
+    font-family: var(--font-text);
+    font-size: var(--font-ui-medium);
+    line-height: var(--line-height-normal);
+    border-radius: var(--radius-m);
+    border: 1px solid var(--background-modifier-border);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* 创建区域编辑器焦点状态 */
+.memos-editor-container .cm-editor.cm-focused {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+/* 移除行号显示 */
+.cm-gutters {
+    display: none;
+}
+
+/* 隐藏代码折叠按钮 */
+.cm-gutter.cm-foldGutter {
+    display: none !important;
+}
+
+/* 设置活动行背景色为白色 */
+.cm-activeLine.cm-line {
+    background-color: white !important;
+}
+
+/* CodeMirror 内容区域样式 */
+.cm-content {
+    padding: var(--size-4-3);
+}
+
+/* CodeMirror 占位符样式 */
+.cm-placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: var(--font-ui-medium);
+    font-family: var(--font-text);
+}
+
+/* CodeMirror 滚动条样式 */
+.cm-scroller {
+    font-family: var(--font-text);
+    font-size: var(--font-ui-medium);
+}
+
+/* 编辑模式的 CodeMirror 编辑器样式 */
+.memo-edit-container {
+    margin-bottom: var(--size-4-4);
+}
+
+.memo-edit-container .cm-editor {
+    border-radius: var(--radius-m);
+    border: 1px solid var(--background-modifier-border);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.memo-edit-container .cm-editor.cm-focused {
+    border-color: var(--interactive-accent);
+    box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+/* 编辑模式按钮样式 */
+.memo-edit-buttons {
+    display: flex;
+    gap: var(--size-2-2);
+    justify-content: flex-end;
+    margin-top: var(--size-4-3);
+}
+
+.memo-edit-buttons button {
+    padding: var(--size-2-1) var(--size-4-3);
+    border-radius: var(--radius-s);
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+    cursor: pointer;
+    font-size: var(--font-ui-small);
+    font-family: var(--font-ui);
+    transition: all 0.2s ease;
+}
+
+.memo-edit-buttons button:hover {
+    background-color: var(--background-modifier-hover);
+    border-color: var(--background-modifier-border-hover);
+}
+
+.memo-edit-buttons button.mod-cta {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.memo-edit-buttons button.mod-cta:hover {
+    background-color: var(--interactive-accent-hover);
+    border-color: var(--interactive-accent-hover);
+}
+
+.memos-editor:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+}
+
+.memos-button-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
+
+
+.memos-list {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-3);
+}
+
+.memo-item {
+  position: relative; /* Needed for menu button positioning */
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background-color: var(--background-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.memo-item:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--background-modifier-border-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-s);
+}
+
+.memo-item .markdown-embed {
+  border: none;
+  padding: var(--size-4-4);
+  background-color: transparent;
+}
+
+.memo-item .markdown-embed-content {
+    max-height: 400px;
+    overflow: auto;
+}
+
+.memo-menu-button {
+  position: absolute;
+  top: var(--size-2-2);
+  right: var(--size-2-2);
+  z-index: 1;
+  padding: var(--size-2-1) var(--size-2-2);
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.memo-item:hover .memo-menu-button {
+  opacity: 1;
+}
+
+/* --- Edit State Styles --- */
+.memo-item.is-editing {
+  padding: var(--size-4-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+}
+
+.memo-edit-textarea {
+  width: 100%;
+  height: 120px; /* Initial height, will auto-adjust */
+  resize: vertical;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  padding: var(--size-2-2);
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  font-family: var(--font-text);
+  font-size: var(--font-ui-medium);
+  line-height: var(--line-height-normal);
+}
+
+.memo-edit-textarea:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+.memo-edit-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--size-2-2);
+}
