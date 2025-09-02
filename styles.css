@@ -57,7 +57,7 @@
 /* 创建区域编辑器焦点状态 */
 .memos-editor-container .cm-editor.cm-focused {
     border-color: var(--interactive-accent);
-    box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+    box-shadow: 0 0 0 1px var(--interactive-accent-hover);
 }
 
 /* 移除行号显示 */
@@ -107,7 +107,7 @@
 
 .memo-edit-container .cm-editor.cm-focused {
     border-color: var(--interactive-accent);
-    box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+    box-shadow: 0 0 0 0 var(--interactive-accent-hover);
 }
 
 /* 编辑模式按钮样式 */
@@ -186,6 +186,7 @@
   border: none;
   padding: var(--size-4-4);
   background-color: transparent;
+  border-radius: 0 0 var(--radius-m) var(--radius-m);
 }
 
 .memo-item .markdown-embed-content {
@@ -193,10 +194,70 @@
     overflow: auto;
 }
 
+/* 备忘录内容区域样式 */
+.memo-content {
+    padding: var(--size-4-4);
+    max-height: 400px;
+    overflow: auto;
+    line-height: var(--line-height-normal);
+}
+
+/* 代码块复制按钮样式 */
+.memo-content pre {
+    position: relative;
+}
+
+.copy-code-button {
+    position: absolute;
+    top: var(--size-2-2);
+    right: var(--size-2-2);
+    padding: var(--size-2-1) var(--size-2-2);
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-s);
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+.memo-content pre:hover .copy-code-button {
+    opacity: 1;
+}
+
+.copy-code-button:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+    border-color: var(--background-modifier-border-hover);
+}
+
+/* 备忘录头部样式 */
+.memo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--size-2-2) var(--size-4-3);
+  border-bottom: 1px solid var(--background-modifier-border);
+  background-color: var(--background-primary-alt);
+  border-radius: var(--radius-m) var(--radius-m) 0 0;
+}
+
+/* 时间戳样式 */
+.memo-timestamp {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+  font-weight: 500;
+  cursor: help;
+}
+
+.memo-timestamp:hover {
+  color: var(--text-normal);
+}
+
 .memo-menu-button {
-  position: absolute;
-  top: var(--size-2-2);
-  right: var(--size-2-2);
   z-index: 1;
   padding: var(--size-2-1) var(--size-2-2);
   background-color: var(--background-secondary);
@@ -206,6 +267,9 @@
   transition: opacity 0.2s ease-in-out;
   font-size: var(--font-ui-smaller);
   color: var(--text-muted);
+  width: auto;
+  min-width: var(--size-4-8);
+  white-space: nowrap;
 }
 
 .memo-item:hover .memo-menu-button {

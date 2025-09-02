@@ -1,5 +1,5 @@
 import { App, Notice, Plugin, WorkspaceLeaf } from 'obsidian';
-import { MemoPluginSettings, DEFAULT_SETTINGS } from './src/types/settings';
+import { MemoPluginSettings, DEFAULT_SETTINGS, mergeSettings, validateSettings } from './src/types/settings';
 import { MemoSettingTab } from './src/settings/tab';
 import { CommandManager } from './src/commands/index';
 import { MEMOS_VIEW_TYPE as VIEW_TYPE_MEMOS, MemosView } from 'src/views/MemosView';
@@ -35,7 +35,7 @@ export default class MemoPlugin extends Plugin {
 
 		this.registerView(
 			VIEW_TYPE_MEMOS,
-			(leaf) => new MemosView(leaf)
+			(leaf) => new MemosView(leaf, this.settings)
 		);
 
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Memo Plugin', (evt: MouseEvent) => {
@@ -92,9 +92,31 @@ export default class MemoPlugin extends Plugin {
 		console.log('Memo Plugin unloaded');
 	}
 
+	/**
+	 * 加载插件设置
+	 * 使用深度合并确保嵌套属性正确处理
+	 */
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const loadedData = await this.loadData() || {};
+		
+		// 验证加载的设置
+		if (loadedData) {
+			const validation = validateSettings(loadedData);
+			if (!validation.isValid) {
+				console.warn('Memo Plugin: Settings validation errors:', validation.errors);
+				// 显示验证错误通知
+				if (validation.errors.length > 0) {
+					new Notice(`设置验证错误已自动修正: ${validation.errors.join(', ')}`, 5000);
+				}
+			}
+		}
+		
+		this.settings = mergeSettings(DEFAULT_SETTINGS, loadedData);
 	}
+
+	/**
+	 * 保存插件设置
+	 */
 
 	async saveSettings() {
 		await this.saveData(this.settings);

@@ -16,10 +16,10 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirro
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { foldGutter, indentOnInput, bracketMatching, foldKeymap } from "@codemirror/language";
+import type { MemoPluginSettings } from '../types/settings';
 
 // 常量定义
 export const MEMOS_VIEW_TYPE = "memos-view";
-const MEMOS_DIR = "Memos";
 
 // 自定义基础设置（不包含行号）
 const customBasicSetup: Extension = [
@@ -63,12 +63,17 @@ export class MemosView extends ItemView {
     /** 备忘录列表容器 */
     private memosContainer: HTMLDivElement;
 
+    /** 插件设置 */
+    private settings: MemoPluginSettings;
+
     /**
      * 构造函数
      * @param leaf 工作区叶子节点
+     * @param settings 插件设置
      */
-    constructor(leaf: WorkspaceLeaf) {
+    constructor(leaf: WorkspaceLeaf, settings: MemoPluginSettings) {
         super(leaf);
+        this.settings = settings;
     }
 
     /**
@@ -84,7 +89,7 @@ export class MemosView extends ItemView {
      * @returns 视图显示名称
      */
     getDisplayText(): string {
-        return "Memos";
+        return this.settings.viewDisplayName;
     }
 
     /**
@@ -92,7 +97,7 @@ export class MemosView extends ItemView {
      * @returns 图标名称
      */
     getIcon(): string {
-        return "pencil";
+        return this.settings.viewIcon;
     }
 
     /**
@@ -179,7 +184,7 @@ export class MemosView extends ItemView {
                     },
                     ".cm-editor.cm-focused": {
                         borderColor: "var(--interactive-accent)",
-                        boxShadow: "0 0 0 2px var(--interactive-accent-hover)"
+                        boxShadow: "0 0 0 1px var(--interactive-accent-hover)"
                     },
                     ".cm-cursor": {
                         borderLeftColor: "var(--text-accent)",
@@ -214,7 +219,7 @@ export class MemosView extends ItemView {
         });
 
         // 设置占位符文本
-        this.codeMirrorView.dom.setAttribute('data-placeholder', "What's on your mind?");
+        this.codeMirrorView.dom.setAttribute('data-placeholder', this.settings.editorPlaceholder);
     }
 
     /**
@@ -223,7 +228,7 @@ export class MemosView extends ItemView {
      */
     private async handleSave(): Promise<void> {
         if (!this.codeMirrorView) {
-            new Notice("编辑器未初始化");
+            new Notice(this.settings.notifications.editorNotInitialized);
             return;
         }
 
@@ -231,7 +236,7 @@ export class MemosView extends ItemView {
 
         // 验证输入内容
         if (!rawContent || rawContent.trim().length === 0) {
-            new Notice("请输入备忘录内容");
+            new Notice(this.settings.notifications.pleaseEnterContent);
             return;
         }
 
@@ -241,8 +246,8 @@ export class MemosView extends ItemView {
 
             // 生成文件信息
             const now = moment();
-            const timestamp = now.format("YYYYMMDDHHmm");
-            const filePath = `${MEMOS_DIR}/${timestamp}.md`;
+            const timestamp = now.format(this.settings.timestampFormat);
+            const filePath = `${this.settings.memosDirectory}/${timestamp}.md`;
 
             // 解析内容并创建文件
             const fileBody = this.parseContentToMarkdown(rawContent);
@@ -264,11 +269,11 @@ export class MemosView extends ItemView {
             });
             await this.renderMemos();
 
-            new Notice("备忘录已保存");
+            new Notice(this.settings.notifications.memoSaved);
 
         } catch (error) {
             console.error("保存备忘录时出错:", error);
-            new Notice("保存备忘录失败，请重试");
+            new Notice(this.settings.notifications.saveFailed);
         }
     }
 
@@ -277,7 +282,7 @@ export class MemosView extends ItemView {
      */
     private async ensureMemosDirectory(): Promise<void> {
         try {
-            await this.app.vault.createFolder(MEMOS_DIR);
+            await this.app.vault.createFolder(this.settings.memosDirectory);
         } catch (e) {
             // 目录已存在时忽略错误
         }
@@ -314,9 +319,13 @@ export class MemosView extends ItemView {
      * @param memoFile 备忘录文件
      */
     private async appendToDailyNote(memoFile: TFile): Promise<void> {
+        if (!this.settings.autoAddToDailyNote) {
+            return;
+        }
+
         try {
-            const today = moment().format("YYYY-MM-DD");
-            const dailyNotePath = `Daily Notes/${today}.md`;
+            const today = moment().format(this.settings.dailyNoteDateFormat);
+            const dailyNotePath = `${this.settings.dailyNoteDirectory}/${today}.md`;
 
             // 获取或创建日记文件
             const dailyNote = await this.getOrCreateDailyNote(dailyNotePath, today);
@@ -327,7 +336,7 @@ export class MemosView extends ItemView {
 
         } catch (error) {
             console.error("添加到日记时出错:", error);
-            // 不阻止备忘录创建，只记录错误
+            new Notice(this.settings.notifications.addToDailyNoteFailed);
         }
     }
 
@@ -360,8 +369,8 @@ export class MemosView extends ItemView {
      */
     private async createNewDailyNote(dailyNotePath: string, today: string): Promise<TFile> {
         try {
-            // 确保Daily Notes目录存在
-            await this.app.vault.createFolder("Daily Notes");
+            // 确保日记目录存在
+            await this.app.vault.createFolder(this.settings.dailyNoteDirectory);
         } catch (e) {
             // 目录已存在时忽略错误
         }
@@ -377,7 +386,7 @@ export class MemosView extends ItemView {
      * @returns 日记文件的初始内容
      */
     private createDailyNoteTemplate(today: string): string {
-        return `# ${today}\n\n## 📝 备忘录\n\n## 📅 今日计划\n\n## 🎯 完成事项\n\n## 💭 思考记录\n\n`;
+        return this.settings.dailyNoteTemplate.replace('{{date}}', today);
     }
 
     /**
@@ -406,7 +415,7 @@ export class MemosView extends ItemView {
      * @returns 更新后的内容
      */
     private insertMemoLinkIntoContent(content: string, memoLink: string): string {
-        const memoSectionHeaders = ["## 📝 备忘录", "## Memos", "## 备忘录"];
+        const memoSectionHeaders = this.settings.memoSectionHeaders;
 
         // 查找备忘录部分
         for (const header of memoSectionHeaders) {
@@ -428,7 +437,7 @@ export class MemosView extends ItemView {
         }
 
         // 如果没有找到备忘录部分，在文件末尾添加新的部分
-        return `${content}\n\n## 📝 备忘录\n\n${memoLink}\n`;
+        return `${content}\n\n${memoSectionHeaders[0]}\n\n${memoLink}\n`;
     }
 
     /**
@@ -474,7 +483,7 @@ export class MemosView extends ItemView {
      */
     private getMemoFiles(): TFile[] {
         return this.app.vault.getMarkdownFiles()
-            .filter(file => file.path.startsWith(MEMOS_DIR + "/"));
+            .filter(file => file.path.startsWith(this.settings.memosDirectory + "/"));
     }
 
     /**
@@ -507,6 +516,61 @@ export class MemosView extends ItemView {
     }
 
     /**
+     * 更新时间戳显示为相对时间格式
+     * @param file 备忘录文件
+     * @param timestampEl 时间戳显示元素
+     */
+    private async updateTimestamp(file: TFile, timestampEl: HTMLSpanElement): Promise<void> {
+        try {
+            const stat = await this.app.vault.adapter.stat(file.path);
+            const mtime = stat?.mtime || 0;
+
+            if (mtime > 0) {
+                const relativeTime = this.formatRelativeTime(mtime);
+                timestampEl.textContent = relativeTime;
+                timestampEl.setAttribute('title', moment(mtime).format('YYYY-MM-DD HH:mm:ss'));
+            } else {
+                timestampEl.textContent = '未知时间';
+            }
+        } catch (error) {
+            console.warn(`获取文件 ${file.path} 的时间信息失败:`, error);
+            timestampEl.textContent = '未知时间';
+        }
+    }
+
+    /**
+     * 格式化相对时间显示
+     * @param timestamp 时间戳（毫秒）
+     * @returns 相对时间字符串
+     */
+    private formatRelativeTime(timestamp: number): string {
+        const now = moment();
+        const fileTime = moment(timestamp);
+        const diffMinutes = now.diff(fileTime, 'minutes');
+        const diffHours = now.diff(fileTime, 'hours');
+        const diffDays = now.diff(fileTime, 'days');
+        const diffWeeks = now.diff(fileTime, 'weeks');
+        const diffMonths = now.diff(fileTime, 'months');
+        const diffYears = now.diff(fileTime, 'years');
+
+        if (diffMinutes < 1) {
+            return '刚刚';
+        } else if (diffMinutes < 60) {
+            return `${diffMinutes}分钟前`;
+        } else if (diffHours < 24) {
+            return `${diffHours}小时前`;
+        } else if (diffDays < 7) {
+            return `${diffDays}天前`;
+        } else if (diffWeeks < 4) {
+            return `${diffWeeks}周前`;
+        } else if (diffMonths < 12) {
+            return `${diffMonths}个月前`;
+        } else {
+            return `${diffYears}年前`;
+        }
+    }
+
+    /**
      * 渲染备忘录的阅读视图
      * @param file 备忘录文件
      * @param container 容器元素
@@ -516,7 +580,7 @@ export class MemosView extends ItemView {
             container.empty();
 
             // 创建头部区域和菜单
-            this.createMemoHeader(file, container);
+            await this.createMemoHeader(file, container);
 
             // 创建内容区域
             await this.createMemoContent(file, container);
@@ -535,8 +599,14 @@ export class MemosView extends ItemView {
      * @param file 备忘录文件
      * @param container 容器元素
      */
-    private createMemoHeader(file: TFile, container: HTMLDivElement): void {
-        const menuButton = container.createEl("button", {
+    private async createMemoHeader(file: TFile, container: HTMLDivElement): Promise<void> {
+        const headerEl = container.createEl("div", { cls: "memo-header" });
+
+        // 创建时间戳显示
+        const timestampEl = headerEl.createEl("span", { cls: "memo-timestamp" });
+        await this.updateTimestamp(file, timestampEl);
+
+        const menuButton = headerEl.createEl("button", {
             cls: "memo-menu-button",
             text: "...",
             attr: { "aria-label": "备忘录菜单" }
@@ -577,7 +647,20 @@ export class MemosView extends ItemView {
      */
     private async createMemoContent(file: TFile, container: HTMLDivElement): Promise<void> {
         const contentEl = container.createEl("div", { cls: "memo-content" });
-        await MarkdownRenderer.render(this.app, `![[${file.path}]]`, contentEl, file.path, this);
+        
+        try {
+            // 直接读取文件内容并渲染，避免生成 markdown-embed-title
+            const fileContent = await this.app.vault.read(file);
+            
+            // 提取正文内容（去除 frontmatter）
+            const bodyContent = this.extractBodyContent(fileContent, this.app.metadataCache.getFileCache(file));
+            
+            // 直接渲染内容，不使用嵌入语法
+            await MarkdownRenderer.render(this.app, bodyContent, contentEl, file.path, this);
+        } catch (error) {
+            console.error('Error rendering memo content:', error);
+            contentEl.createEl('p', { text: '无法加载备忘录内容' });
+        }
     }
 
     /**
@@ -746,7 +829,7 @@ export class MemosView extends ItemView {
                     },
                     ".cm-editor.cm-focused": {
                         borderColor: "var(--interactive-accent)",
-                        boxShadow: "0 0 0 2px var(--interactive-accent-hover)"
+                        boxShadow: "0 0 0 1px var(--interactive-accent-hover)"
                     },
                     ".cm-cursor": {
                         borderLeftColor: "var(--text-accent)",
