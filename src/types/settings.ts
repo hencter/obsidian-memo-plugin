@@ -21,6 +21,9 @@ export interface MemoPluginSettings {
 	/** 备忘录存储目录 */
 	memosDirectory: string;
 	
+	/** 归档备忘录存储目录 */
+	archiveDirectory: string;
+	
 	/** 日记存储目录 */
 	dailyNoteDirectory: string;
 	
@@ -55,6 +58,7 @@ export interface MemoPluginSettings {
 /** 默认设置值 - 使用 Partial 类型以支持部分配置 */
 export const DEFAULT_SETTINGS: Partial<MemoPluginSettings> = {
 	memosDirectory: 'Memos',
+	archiveDirectory: 'Memos/Archive',
 	dailyNoteDirectory: 'Daily Notes',
 	dailyNoteDateFormat: 'YYYY-MM-DD',
 	timestampFormat: 'YYYYMMDDHHmm',

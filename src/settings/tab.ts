@@ -38,6 +38,24 @@ export class MemoSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
+			.setName('Archive directory')
+			.setDesc('Directory where archived memo files will be stored')
+			.addText(text => text
+				.setPlaceholder('Memos/Archive')
+				.setValue(this.plugin.settings.archiveDirectory)
+				.onChange(async (value) => {
+					const validation = validateDirectoryPath(value);
+					if (!validation.isValid) {
+						new Notice(`Directory path error: ${validation.errorMessage}`);
+						text.setValue(validation.correctedValue || 'Memos/Archive');
+						this.plugin.settings.archiveDirectory = validation.correctedValue || 'Memos/Archive';
+					} else {
+						this.plugin.settings.archiveDirectory = value || 'Memos/Archive';
+					}
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
 			.setName('Daily note directory')
 			.setDesc('Directory where daily note files are stored')
 			.addText(text => text

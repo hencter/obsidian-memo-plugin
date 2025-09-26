@@ -274,3 +274,85 @@
   justify-content: flex-end;
   gap: var(--size-2-2);
 }
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .memo-item {
+    padding: var(--size-4-2);
+  }
+  
+  .memo-actions {
+    flex-direction: column;
+    gap: var(--size-2-1);
+  }
+  
+  .memo-action-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* 归档模态框样式 */
+.archive-file-info {
+  margin-bottom: var(--size-4-4);
+  padding: var(--size-4-2);
+  background-color: var(--background-secondary);
+  border-radius: var(--radius-s);
+  border-left: 3px solid var(--interactive-accent);
+}
+
+.archive-file-name {
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-normal);
+}
+
+.modal-button-container {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--size-4-2);
+  margin-top: var(--size-4-4);
+  padding-top: var(--size-4-2);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.modal-button-container button {
+  padding: var(--size-2-2) var(--size-4-4);
+  border-radius: var(--button-radius);
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-ui-small);
+  font-weight: var(--font-weight-medium);
+  transition: all 0.2s ease;
+}
+
+.modal-button-container button:first-child {
+  background-color: var(--background-modifier-border);
+  color: var(--text-normal);
+}
+
+.modal-button-container button:first-child:hover {
+  background-color: var(--background-modifier-border-hover);
+}
+
+.modal-button-container button.mod-warning {
+  background-color: var(--color-orange);
+  color: var(--text-on-accent);
+}
+
+.modal-button-container button.mod-warning:hover {
+  background-color: var(--color-orange-hover);
+}
+
+
+
+/* 输入框验证样式 */
+.setting-item input.is-invalid {
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 2px rgba(var(--color-red-rgb), 0.2);
+}
+
+.setting-item input.is-invalid:focus {
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 2px rgba(var(--color-red-rgb), 0.3);
+}

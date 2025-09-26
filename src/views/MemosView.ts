@@ -7,7 +7,8 @@ import {
     MarkdownRenderer,
     moment,
     Menu,
-    stringifyYaml
+    stringifyYaml,
+    TFolder
 } from "obsidian";
 import { EditorView, keymap, highlightActiveLine, highlightActiveLineGutter, dropCursor, rectangularSelection, crosshairCursor } from "@codemirror/view";
 import { EditorState, Extension } from "@codemirror/state";
@@ -17,6 +18,7 @@ import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
 import { autocompletion, completionKeymap, closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { foldGutter, indentOnInput, bracketMatching, foldKeymap } from "@codemirror/language";
 import type { MemoPluginSettings } from '../types/settings';
+import { ArchiveModal } from '../modals/ArchiveModal';
 
 // 常量定义
 export const MEMOS_VIEW_TYPE = "memos-view";
@@ -98,6 +100,14 @@ export class MemosView extends ItemView {
      */
     getIcon(): string {
         return this.settings.viewIcon;
+    }
+
+    /**
+     * 获取归档目录
+     * @returns 归档目录路径
+     */
+    private getArchiveDirectory(): string {
+        return this.settings.archiveDirectory;
     }
 
     /**
@@ -285,6 +295,29 @@ export class MemosView extends ItemView {
             await this.app.vault.createFolder(this.settings.memosDirectory);
         } catch (e) {
             // 目录已存在时忽略错误
+        }
+    }
+
+    /**
+     * 确保归档目录存在
+     */
+    private async ensureArchiveDirectory(): Promise<void> {
+        try {
+            await this.app.vault.createFolder(this.settings.archiveDirectory);
+        } catch (e) {
+            // 目录已存在时忽略错误
+        }
+    }
+
+    /**
+     * 确保指定目录存在
+     * @param directoryPath 目录路径
+     */
+    private async ensureDirectoryExists(directoryPath: string): Promise<void> {
+        try {
+            await this.app.vault.createFolder(directoryPath);
+        } catch (error) {
+            // 文件夹已存在时会抛出错误，忽略此错误
         }
     }
 
@@ -626,6 +659,16 @@ export class MemosView extends ItemView {
                     })
             );
 
+            // 添加归档选项
+            menu.addItem((item) =>
+                item
+                    .setTitle("归档")
+                    .setIcon("archive")
+                    .onClick(async () => {
+                        await this.archiveMemo(file);
+                    })
+            );
+
             // 添加删除选项
             menu.addItem((item) =>
                 item
@@ -660,6 +703,60 @@ export class MemosView extends ItemView {
         } catch (error) {
             console.error('Error rendering memo content:', error);
             contentEl.createEl('p', { text: '无法加载备忘录内容' });
+        }
+    }
+
+    /**
+     * 归档备忘录 - 打开归档模态框
+     * @param file 要归档的备忘录文件
+     */
+    private async archiveMemo(file: TFile): Promise<void> {
+        // 创建并打开归档模态框
+        const modal = new ArchiveModal(
+            this.app,
+            file,
+            this.settings,
+            async (archivePath: string, filename: string) => {
+                await this.performArchive(file, archivePath, filename);
+            }
+        );
+        modal.open();
+    }
+
+    /**
+     * 执行实际的归档操作
+     * @param file 要归档的备忘录文件
+     * @param archivePath 归档路径
+     * @param filename 新文件名
+     */
+    private async performArchive(file: TFile, archivePath: string, filename: string): Promise<void> {
+        try {
+            // 确保归档目录存在
+            await this.ensureDirectoryExists(archivePath);
+            
+            // 构建归档文件的完整路径
+            const archiveFilePath = `${archivePath}/${filename}.${file.extension}`;
+            
+            // 检查目标路径是否已存在同名文件
+            const existingFile = this.app.vault.getAbstractFileByPath(archiveFilePath);
+            if (existingFile) {
+                // 如果存在同名文件，添加时间戳后缀
+                const timestamp = moment().format('YYYYMMDDHHmmss');
+                const newArchiveFilePath = `${archivePath}/${filename}_${timestamp}.${file.extension}`;
+                await this.app.vault.rename(file, newArchiveFilePath);
+                new Notice(`备忘录已归档为: ${filename}_${timestamp}.${file.extension}`);
+            } else {
+                // 直接移动文件
+                await this.app.vault.rename(file, archiveFilePath);
+                new Notice(`备忘录已归档为: ${filename}.${file.extension}`);
+            }
+            
+            // 刷新备忘录列表
+            await this.renderMemos();
+            
+        } catch (error) {
+            console.error(`归档备忘录 ${file.path} 时出错:`, error);
+            new Notice("归档备忘录失败，请重试");
         }
     }
 
