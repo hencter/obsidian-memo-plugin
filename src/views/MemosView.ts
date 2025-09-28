@@ -127,6 +127,9 @@ export class MemosView extends ItemView {
 
         // 初始渲染备忘录列表
         await this.renderMemos();
+
+        // 添加文件变化监听器
+        this.setupFileWatchers();
     }
 
     /**
@@ -491,12 +494,8 @@ export class MemosView extends ItemView {
             for (const file of sortedFiles) {
                 const memoEl = this.memosContainer.createEl("div", { cls: "memo-item" });
 
-                // 添加双击事件监听器，双击进入编辑状态
-                this.registerDomEvent(memoEl, 'dblclick', (event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    this.renderMemoEditView(file, memoEl);
-                });
+                // 添加事件监听器和数据属性
+                this.addMemoEventListeners(file, memoEl);
 
                 await this.renderMemoReadView(file, memoEl);
             }
@@ -1042,6 +1041,152 @@ export class MemosView extends ItemView {
             console.error(`保存编辑内容时出错:`, error);
             new Notice("保存失败，请重试");
         }
+    }
+
+    /**
+     * 在 Obsidian 编辑器中打开指定的笔记文件
+     * @param file 要打开的文件
+     */
+    private async openFileInEditor(file: TFile): Promise<void> {
+        try {
+            // 获取当前工作区的活动叶子
+            const leaf = this.app.workspace.getLeaf(false);
+            
+            // 在叶子中打开文件
+            await leaf.openFile(file);
+            
+            // 可选：聚焦到编辑器
+            this.app.workspace.setActiveLeaf(leaf, { focus: true });
+            
+        } catch (error) {
+            console.error('打开文件时出错:', error);
+            new Notice(`无法打开文件: ${file.name}`);
+        }
+    }
+
+    /**
+     * 设置文件变化监听器
+     * 监听 memos 目录下文件的变化，自动刷新视图
+     */
+    private setupFileWatchers(): void {
+        // 监听文件修改事件
+        this.registerEvent(
+            this.app.vault.on('modify', (file) => {
+                if (file instanceof TFile && this.isMemoFile(file)) {
+                    this.refreshMemoView(file);
+                }
+            })
+        );
+
+        // 监听文件创建事件
+        this.registerEvent(
+            this.app.vault.on('create', (file) => {
+                if (file instanceof TFile && this.isMemoFile(file)) {
+                    this.refreshMemosView();
+                }
+            })
+        );
+
+        // 监听文件删除事件
+        this.registerEvent(
+            this.app.vault.on('delete', (file) => {
+                if (file instanceof TFile && this.isMemoFile(file)) {
+                    this.refreshMemosView();
+                }
+            })
+        );
+
+        // 监听文件重命名事件
+        this.registerEvent(
+            this.app.vault.on('rename', (file, oldPath) => {
+                if ((file instanceof TFile && this.isMemoFile(file)) || oldPath.startsWith(this.settings.memosDirectory)) {
+                    this.refreshMemosView();
+                }
+            })
+        );
+    }
+
+    /**
+     * 检查文件是否为 memo 文件
+     * @param file 要检查的文件
+     */
+    private isMemoFile(file: TFile): boolean {
+        return file.path.startsWith(this.settings.memosDirectory) && file.extension === 'md';
+    }
+
+    /**
+     * 刷新单个 memo 的视图
+     * @param file 被修改的文件
+     */
+    private async refreshMemoView(file: TFile): Promise<void> {
+        try {
+            // 查找对应的 memo 元素
+            const memoElements = this.memosContainer.querySelectorAll('.memo-item');
+            
+            for (const element of Array.from(memoElements)) {
+                const memoEl = element as HTMLDivElement;
+                // 通过数据属性或其他方式识别对应的文件
+                // 这里我们重新渲染整个 memo 项
+                if (memoEl.dataset.filePath === file.path) {
+                    // 清空当前内容
+                    memoEl.empty();
+                    
+                    // 重新添加事件监听器
+                    this.addMemoEventListeners(file, memoEl);
+                    
+                    // 重新渲染内容
+                    await this.renderMemoReadView(file, memoEl);
+                    return;
+                }
+            }
+            
+            // 如果没有找到对应的元素，可能是新文件，刷新整个列表
+            await this.refreshMemosView();
+            
+        } catch (error) {
+            console.error('刷新 memo 视图时出错:', error);
+        }
+    }
+
+    /**
+     * 刷新整个 memos 视图
+     */
+    private async refreshMemosView(): Promise<void> {
+        try {
+            await this.renderMemos();
+        } catch (error) {
+            console.error('刷新 memos 视图时出错:', error);
+        }
+    }
+
+    /**
+     * 为 memo 元素添加事件监听器
+     * @param file memo 文件
+     * @param memoEl memo 元素
+     */
+    private addMemoEventListeners(file: TFile, memoEl: HTMLDivElement): void {
+        // 设置数据属性用于识别
+        memoEl.dataset.filePath = file.path;
+
+        // 添加单击事件监听器，单击在编辑器中打开文件
+        this.registerDomEvent(memoEl, 'click', (event) => {
+            // 检查是否点击的是菜单按钮或其他交互元素
+            const target = event.target as HTMLElement;
+            if (target.closest('.memo-menu-button') || target.closest('button')) {
+                return; // 如果点击的是按钮，不执行打开文件操作
+            }
+            
+            event.preventDefault();
+            event.stopPropagation();
+            this.openFileInEditor(file);
+        });
+
+        // 添加双击事件监听器，双击进入编辑状态
+        this.registerDomEvent(memoEl, 'dblclick', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            this.renderMemoEditView(file, memoEl);
+        });
     }
 
     /**
