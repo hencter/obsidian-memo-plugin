@@ -282,6 +282,9 @@ export class MemosView extends ItemView {
             });
             await this.renderMemos();
 
+            // 自动打开新创建的 memo 文件
+            await this.openFileInEditor(newMemoFile);
+
             new Notice(this.settings.notifications.memoSaved);
 
         } catch (error) {
@@ -1128,14 +1131,19 @@ export class MemosView extends ItemView {
                 // 通过数据属性或其他方式识别对应的文件
                 // 这里我们重新渲染整个 memo 项
                 if (memoEl.dataset.filePath === file.path) {
+                    // 如果正在编辑状态，不进行刷新
+                    if (memoEl.hasClass('is-editing')) {
+                        return;
+                    }
+                    
                     // 清空当前内容
                     memoEl.empty();
                     
-                    // 重新添加事件监听器
-                    this.addMemoEventListeners(file, memoEl);
-                    
                     // 重新渲染内容
                     await this.renderMemoReadView(file, memoEl);
+                    
+                    // 重新添加事件监听器
+                    this.addMemoEventListeners(file, memoEl);
                     return;
                 }
             }
@@ -1185,6 +1193,12 @@ export class MemosView extends ItemView {
         this.registerDomEvent(memoEl, 'dblclick', (event) => {
             event.preventDefault();
             event.stopPropagation();
+            
+            // 检查是否已经在编辑状态
+            if (memoEl.hasClass('is-editing')) {
+                return;
+            }
+            
             this.renderMemoEditView(file, memoEl);
         });
     }
